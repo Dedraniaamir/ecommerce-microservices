@@ -12,14 +12,24 @@ import java.util.List; /**
  */
 public interface UserService {
     UserResponseDto createUser(CreateUserRequestDto requestDto);
+
     UserResponseDto getUserById(Long id);
+
     UserResponseDto getUserByUsername(String username);
+
     List<UserResponseDto> getAllUsers();
+
     List<UserResponseDto> getUsersByStatus(UserStatus status);
+
     UserResponseDto updateUserStatus(Long userId, UserStatus status);
+
     void addLoyaltyPoints(Long customerId, Integer points);
+
     void assignRole(Long userId, RoleName roleName);
+
     List<UserSummaryDto> getActiveUsersSummary();
+
     boolean existsByUsername(String username);
+
     boolean existsByEmail(String email);
 }

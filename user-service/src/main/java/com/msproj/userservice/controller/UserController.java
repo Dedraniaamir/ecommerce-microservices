@@ -4,6 +4,8 @@ package com.msproj.userservice.controller;
 import com.msproj.userservice.dto.*;
 import com.msproj.userservice.entity.UserStatus;
 import com.msproj.userservice.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +30,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/users")
 @CrossOrigin(origins = "*")  // For development - remove in production
+@Tag(name = "User Management", description = "Operations related to users")
 public class UserController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
@@ -44,6 +47,7 @@ public class UserController {
      * POST /api/users
      */
     @PostMapping
+    @Operation(summary = "Creates new user", description = "Creates new user")
     public ResponseEntity<UserResponseDto> createUser(@Valid @RequestBody CreateUserRequestDto requestDto) {
         logger.info("POST /api/users - Creating user with username: {}", requestDto.getUsername());
 
