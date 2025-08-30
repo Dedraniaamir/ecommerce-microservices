@@ -1,0 +1,87 @@
+# Service Registry (Eureka Server) Configuration
+server:
+  port: 8761  # Standard Eureka Server port
+
+spring:
+  application:
+    name: service-registry
+  
+  # Profile-based configuration
+  profiles:
+    active: dev
+
+# Eureka Server Configuration
+eureka:
+  instance:
+    hostname: localhost
+    prefer-ip-address: false
+  
+  client:
+    # Important: Eureka server should not register itself as a client
+    register-with-eureka: false  # Don't register this server with itself
+    fetch-registry: false        # Don't fetch registry from itself
+    
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  
+  server:
+    # How often to run the eviction task (in milliseconds)
+    eviction-interval-timer-in-ms: 15000
+    
+    # Threshold for renewing leases to prevent network partitions
+    renewal-percent-threshold: 0.85
+    
+    # Enable self preservation mode to prevent mass evictions
+    enable-self-preservation: true
+    
+    # How long to wait before evicting instances (in milliseconds)
+    renewal-threshold-update-interval-ms: 15000
+
+# Actuator endpoints for monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,eureka
+  endpoint:
+    health:
+      show-details: always
+
+# Logging configuration
+logging:
+  level:
+    com.netflix.eureka: INFO
+    com.netflix.discovery: INFO
+    org.springframework.cloud: INFO
+    com.ecommerce: DEBUG
+  
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%logger{36}] - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%logger{36}] - %msg%n"
+
+---
+# Development Profile
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+logging:
+  level:
+    root: INFO
+
+---
+# Production Profile  
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+logging:
+  level:
+    root: WARN
+    com.ecommerce: INFO
+
+eureka:
+  server:
+    enable-self-preservation: false  # Disable in production for faster detection
