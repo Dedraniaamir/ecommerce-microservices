@@ -12,8 +12,8 @@ public class SwaggerConfig {
     public OpenAPI libraryApi() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Library Management System API")
+                        .title("User Service Management")
                         .version("1.0")
-                        .description("Spring Boot Library Project with OOPs, Java 8, Collections & Multithreading"));
+                        .description("API for User Service Management"));
     }
 }

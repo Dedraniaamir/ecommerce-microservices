@@ -1,10 +1,7 @@
 package com.msproj.userservice.controller;
 
 
-import com.msproj.userservice.dto.CreateUserRequestDto;
-import com.msproj.userservice.dto.UserResponseDto;
-import com.msproj.userservice.dto.UserSummaryDto;
-import com.msproj.userservice.entity.RoleName;
+import com.msproj.userservice.dto.*;
 import com.msproj.userservice.entity.UserStatus;
 import com.msproj.userservice.service.UserService;
 import jakarta.validation.Valid;
@@ -194,32 +191,3 @@ public class UserController {
     }
 }
 
-/**
- * Additional DTOs for specific operations
- */
-class UpdateStatusRequestDto {
-    private UserStatus status;
-
-    public UpdateStatusRequestDto() {}
-
-    public UserStatus getStatus() { return status; }
-    public void setStatus(UserStatus status) { this.status = status; }
-}
-
-class AddLoyaltyPointsRequestDto {
-    private Integer points;
-
-    public AddLoyaltyPointsRequestDto() {}
-
-    public Integer getPoints() { return points; }
-    public void setPoints(Integer points) { this.points = points; }
-}
-
-class AssignRoleRequestDto {
-    private RoleName roleName;
-
-    public AssignRoleRequestDto() {}
-
-    public RoleName getRoleName() { return roleName; }
-    public void setRoleName(RoleName roleName) { this.roleName = roleName; }
-}
