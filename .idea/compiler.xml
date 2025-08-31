@@ -20,7 +20,7 @@
       <module name="api-gateway" options="-parameters" />
       <module name="notification-service" options="-parameters" />
       <module name="order-service" options="-parameters" />
-      <module name="product-service" options="-parameters" />
+      <module name="product-service" options="" />
       <module name="service-registry" options="" />
       <module name="user-service" options="" />
     </option>
