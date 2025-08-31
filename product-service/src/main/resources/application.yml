@@ -9,7 +9,7 @@ spring:
   profiles:
     active: dev
 
-    datasource:
+  datasource:
     url: jdbc:postgresql://localhost:5432/ecommerce-microservices_productdb
     driver-class-name: org.postgresql.Driver
     username: postgres
@@ -119,4 +119,4 @@ spring:
 logging:
   level:
     root: WARN
-    com.ecommerce.product: INFO
+    com.msproj.productservice.entity.product: INFO
