@@ -1,0 +1,326 @@
+# API Gateway Configuration
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  
+  profiles:
+    active: dev
+
+  # Cloud Gateway Configuration
+  cloud:
+    gateway:
+      # Global CORS configuration
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origin-patterns:
+              - "http://localhost:*"
+              - "https://*.yourdomain.com"
+            allowed-methods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowed-headers:
+              - "*"
+            allow-credentials: true
+            max-age: 3600
+
+      # Default filters applied to all routes
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+        - AddResponseHeader=X-Gateway-Response, true
+
+      # Route discovery configuration
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+          filters:
+            - name: RequestRateLimiter
+              args:
+                key-resolver: "#{@userKeyResolver}"
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+
+  # Security Configuration
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Keycloak configuration (fallback to mock for development)
+          issuer-uri: http://localhost:8180/realms/ecommerce
+          jwk-set-uri: http://localhost:8180/realms/ecommerce/protocol/openid-connect/certs
+
+  # Redis Configuration (for rate limiting)
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+# Eureka Client Configuration
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  
+  instance:
+    hostname: localhost
+    prefer-ip-address: false
+    metadata-map:
+      version: 1.0.0
+      description: API Gateway for microservices
+
+# Resilience4j Circuit Breaker Configuration
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+        recordExceptions:
+          - org.springframework.web.client.HttpServerErrorException
+          - java.util.concurrent.TimeoutException
+          - java.io.IOException
+          - org.springframework.web.reactive.function.client.WebClientResponseException$InternalServerError
+        ignoreExceptions:
+          - org.springframework.web.client.HttpClientErrorException
+          - org.springframework.web.reactive.function.client.WebClientResponseException$NotFound
+
+    instances:
+      user-service-cb:
+        baseConfig: default
+        slidingWindowSize: 20
+        minimumNumberOfCalls: 10
+      
+      product-service-read-cb:
+        baseConfig: default
+        slidingWindowSize: 15
+        failureRateThreshold: 60
+      
+      product-service-write-cb:
+        baseConfig: default
+        slidingWindowSize: 10
+        failureRateThreshold: 30
+      
+      order-service-cb:
+        baseConfig: default
+        slidingWindowSize: 10
+        failureRateThreshold: 40
+
+  # Retry configuration
+  retry:
+    instances:
+      user-service:
+        maxAttempts: 3
+        waitDuration: 1s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+          - java.util.concurrent.TimeoutException
+      
+      product-service:
+        maxAttempts: 3
+        waitDuration: 500ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+      
+      order-service:
+        maxAttempts: 2
+        waitDuration: 1s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+
+  # Timeout configuration
+  timelimiter:
+    instances:
+      user-service:
+        timeoutDuration: 5s
+        cancelRunningFuture: true
+      product-service:
+        timeoutDuration: 3s
+        cancelRunningFuture: true
+      order-service:
+        timeoutDuration: 10s
+        cancelRunningFuture: true
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,circuitbreakers,retries,gateway
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
+  health:
+    circuitbreakers:
+      enabled: true
+
+# Application Information
+info:
+  app:
+    name: API Gateway
+    description: Central gateway for E-Commerce microservices
+    version: 1.0.0
+    features:
+      - OAuth2 JWT Authentication
+      - Role-based authorization
+      - Circuit breaker pattern
+      - Request/response logging
+      - Rate limiting
+      - CORS support
+      - Service discovery routing
+
+# Logging Configuration
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.security: INFO
+    org.springframework.web.reactive: INFO
+    io.github.resilience4j: DEBUG
+    com.ecommerce.gateway: DEBUG
+    ACCESS_LOG: INFO
+    PERFORMANCE_LOG: INFO
+  
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%logger{36}] [%X{correlationId}] - %msg%n"
+
+# Custom Gateway Properties
+gateway:
+  security:
+    jwt:
+      mock-enabled: true  # Enable mock JWT for development
+
+  rate-limiting:
+    enabled: true
+    default-requests-per-minute: 100
+
+  logging:
+    request-response-enabled: true
+    performance-monitoring-enabled: true
+    access-log-enabled: true
+
+  cors:
+    enabled: true
+    allowed-origins:
+      - "http://localhost:3000"   # React app
+      - "http://localhost:4200"   # Angular app
+      - "http://localhost:8080"   # Gateway itself
+
+  circuit-breaker:
+    enabled: true
+    default-failure-threshold: 50
+    default-timeout: 10s
+
+---
+# Development Profile
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Mock configuration for development
+          issuer-uri: http://mock-keycloak/realms/ecommerce
+
+gateway:
+  security:
+    jwt:
+      mock-enabled: true
+
+logging:
+  level:
+    com.ecommerce.gateway: DEBUG
+    ACCESS_LOG: DEBUG
+    PERFORMANCE_LOG: DEBUG
+
+---
+# Production Profile
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://keycloak:8180/realms/ecommerce}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://keycloak:8180/realms/ecommerce/protocol/openid-connect/certs}
+
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
+gateway:
+  security:
+    jwt:
+      mock-enabled: false
+
+  cors:
+    allowed-origins:
+      - "https://app.yourdomain.com"
+      - "https://admin.yourdomain.com"
+
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
+    com.ecommerce.gateway: INFO
+    ACCESS_LOG: INFO
+    PERFORMANCE_LOG: INFO
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 20
+        minimumNumberOfCalls: 10
+        failureRateThreshold: 30
+
+---
+# Testing Profile
+spring:
+  config:
+    activate:
+      on-profile: test
+
+gateway:
+  security:
+    jwt:
+      mock-enabled: true
+  rate-limiting:
+    enabled: false
+  circuit-breaker:
+    enabled: false
+
+logging:
+  level:
+    com.ecommerce.gateway: WARN

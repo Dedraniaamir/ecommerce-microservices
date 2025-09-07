@@ -1,0 +1,331 @@
+version: '3.8'
+
+services:
+  # Service Registry
+  service-registry:
+    build: ./service-registry
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # API Gateway
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-registry:8761/eureka
+      - KEYCLOAK_ISSUER_URI=http://keycloak:8180/realms/ecommerce
+      - REDIS_HOST=redis
+    depends_on:
+      service-registry:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/gateway/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+  # User Service
+  user-service:
+    build: ./user-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-registry:8761/eureka
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-user:5432/userdb
+      - SPRING_DATASOURCE_USERNAME=user_service
+      - SPRING_DATASOURCE_PASSWORD=user_password
+    depends_on:
+      service-registry:
+        condition: service_healthy
+      postgres-user:
+        condition: service_healthy
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  # Product Service
+  product-service:
+    build: ./product-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-registry:8761/eureka
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-product:5432/productdb
+      - SPRING_DATASOURCE_USERNAME=product_service
+      - SPRING_DATASOURCE_PASSWORD=product_password
+    depends_on:
+      service-registry:
+        condition: service_healthy
+      postgres-product:
+        condition: service_healthy
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  # Order Service
+  order-service:
+    build: ./order-service
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://service-registry:8761/eureka
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-order:5432/orderdb
+      - SPRING_DATASOURCE_USERNAME=order_service
+      - SPRING_DATASOURCE_PASSWORD=order_password
+    depends_on:
+      service-registry:
+        condition: service_healthy
+      postgres-order:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+      product-service:
+        condition: service_healthy
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  # PostgreSQL for User Service
+  postgres-user:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=userdb
+      - POSTGRES_USER=user_service
+      - POSTGRES_PASSWORD=user_password
+    volumes:
+      - postgres_user_data:/var/lib/postgresql/data
+      - ./config/postgres/init-user-db.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user_service -d userdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL for Product Service
+  postgres-product:
+    image: postgres:15-alpine
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_DB=productdb
+      - POSTGRES_USER=product_service
+      - POSTGRES_PASSWORD=product_password
+    volumes:
+      - postgres_product_data:/var/lib/postgresql/data
+      - ./config/postgres/init-product-db.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U product_service -d productdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL for Order Service
+  postgres-order:
+    image: postgres:15-alpine
+    ports:
+      - "5434:5432"
+    environment:
+      - POSTGRES_DB=orderdb
+      - POSTGRES_USER=order_service
+      - POSTGRES_PASSWORD=order_password
+    volumes:
+      - postgres_order_data:/var/lib/postgresql/data
+      - ./config/postgres/init-order-db.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U order_service -d orderdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for rate limiting and caching
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Keycloak for Authentication
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0.3
+    ports:
+      - "8180:8080"
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin123
+      - KC_DB=postgres
+      - KC_DB_URL=jdbc:postgresql://postgres-keycloak:5432/keycloakdb
+      - KC_DB_USERNAME=keycloak
+      - KC_DB_PASSWORD=keycloak_password
+    command: start-dev --import-realm
+    volumes:
+      - ./config/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+    depends_on:
+      postgres-keycloak:
+        condition: service_healthy
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  # PostgreSQL for Keycloak
+  postgres-keycloak:
+    image: postgres:15-alpine
+    ports:
+      - "5435:5432"
+    environment:
+      - POSTGRES_DB=keycloakdb
+      - POSTGRES_USER=keycloak
+      - POSTGRES_PASSWORD=keycloak_password
+    volumes:
+      - postgres_keycloak_data:/var/lib/postgresql/data
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloakdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Prometheus for monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - ecommerce-network
+
+  # Grafana for dashboards
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+    networks:
+      - ecommerce-network
+
+  # ELK Stack for logging
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - ecommerce-network
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.11.0
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./config/logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+    environment:
+      - "LS_JAVA_OPTS=-Xmx256m -Xms256m"
+    depends_on:
+      - elasticsearch
+    networks:
+      - ecommerce-network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    networks:
+      - ecommerce-network
+
+networks:
+  ecommerce-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  postgres_user_data:
+  postgres_product_data:
+  postgres_order_data:
+  postgres_keycloak_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+  elasticsearch_data:
