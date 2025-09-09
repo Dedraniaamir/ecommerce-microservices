@@ -1,6 +1,7 @@
 package com.msproj.productservice.service;
 
 import com.msproj.productservice.dto.*;
+import com.msproj.productservice.entity.Product;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -47,4 +48,6 @@ public interface ProductService {
 
     @Transactional(readOnly = true)
     List<ProductResponseDto> findSimilarProducts(Long productId);
+
+    List<Product> getProductByIdsList(List<Long> id);
 }

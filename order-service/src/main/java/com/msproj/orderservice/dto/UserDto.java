@@ -5,7 +5,7 @@ import java.time.LocalDateTime; /**
  */
 
 // User Service DTOs
-public record UserDto(
+public record   UserDto(
         Long id,
         String username,
         String email,

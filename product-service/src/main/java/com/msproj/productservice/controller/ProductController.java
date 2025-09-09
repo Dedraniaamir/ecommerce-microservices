@@ -1,6 +1,7 @@
 package com.msproj.productservice.controller;
 
 import com.msproj.productservice.dto.*;
+import com.msproj.productservice.entity.Product;
 import com.msproj.productservice.entity.ProductStatus;
 import com.msproj.productservice.service.ProductService;
 import jakarta.validation.Valid;
@@ -57,10 +58,19 @@ public class ProductController {
      * GET /api/products/{id}
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ProductResponseDto> getProductById(@PathVariable Long id) {
+    public ResponseEntity<ProductResponseDto> getProductsByIds(@PathVariable Long id) {
         logger.debug("GET /api/products/{} - Fetching product", id);
 
         ProductResponseDto response = productService.getProductById(id);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/batch")
+    public ResponseEntity<List<Product>> getProductsByIdsList(@RequestBody List<Long> id) {
+        logger.debug("GET /api/products/{} - Fetching product", id);
+
+        List<Product> response = productService.getProductByIdsList(id);
 
         return ResponseEntity.ok(response);
     }

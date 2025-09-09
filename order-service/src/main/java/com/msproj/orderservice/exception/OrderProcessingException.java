@@ -6,6 +6,6 @@ public class OrderProcessingException extends OrderServiceException {
     }
 
     public OrderProcessingException(String message, Throwable cause) {
-        super(message, "ORDER_PROCESSING_FAILED", cause);
+        super(message, "ORDER_PROCESSING_FAILED", cause, "005");
     }
 }

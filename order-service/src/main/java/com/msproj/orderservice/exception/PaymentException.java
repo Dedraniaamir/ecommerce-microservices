@@ -6,6 +6,6 @@ public class PaymentException extends OrderServiceException {
     }
 
     public PaymentException(String message, Throwable cause) {
-        super(message, "PAYMENT_FAILED", cause);
+        super(message, "PAYMENT_FAILED", cause, "006");
     }
 }

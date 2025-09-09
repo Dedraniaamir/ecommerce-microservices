@@ -518,6 +518,11 @@ public class ProductServiceImpl implements ProductService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<Product> getProductByIdsList(List<Long> id) {
+        return productRepository.findAllById(id);
+    }
+
     // LAMBDA EXPRESSIONS: Custom similarity calculation
     private ProductSimilarity calculateSimilarity(Product base, Product candidate) {
         int score = 0;

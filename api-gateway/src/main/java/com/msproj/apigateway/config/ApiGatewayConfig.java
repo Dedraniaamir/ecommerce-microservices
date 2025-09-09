@@ -4,7 +4,8 @@ package com.msproj.apigateway.config;
  * Required imports
  */
 
-import com.netflix.eureka.RateLimitingFilter;
+//import com.netflix.eureka.RateLimitingFilter;
+import com.msproj.apigateway.config.RateLimitingFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,9 +75,7 @@ public class ApiGatewayConfig {
                                         .setRetries(3)
                                         .setBackoff(Duration.ofMillis(100), Duration.ofMillis(1000), 2, false))
                         )
-                        .uri("lb://user-service")
-                        .metadata("service-name", "user-service")
-                        .metadata("require-auth", "true"))
+                        .uri("lb://user-service"))
 
                 // PRODUCT SERVICE ROUTES
                 .route("product-service-read", r -> r
@@ -91,9 +90,7 @@ public class ApiGatewayConfig {
                                         .setName("product-service-read-cb")
                                         .setFallbackUri("forward:/fallback/product-service"))
                         )
-                        .uri("lb://product-service")
-                        .metadata("service-name", "product-service")
-                        .metadata("require-auth", "false"))
+                        .uri("lb://product-service"))
 
                 .route("product-service-write", r -> r
                         .path("/api/products/**")
@@ -107,9 +104,7 @@ public class ApiGatewayConfig {
                                         .setName("product-service-write-cb")
                                         .setFallbackUri("forward:/fallback/product-service"))
                         )
-                        .uri("lb://product-service")
-                        .metadata("service-name", "product-service")
-                        .metadata("require-auth", "true"))
+                        .uri("lb://product-service"))
 
                 // ORDER SERVICE ROUTES
                 .route("order-service", r -> r
@@ -128,9 +123,7 @@ public class ApiGatewayConfig {
                                         .setRetries(2)
                                         .setBackoff(Duration.ofMillis(200), Duration.ofMillis(2000), 2, false))
                         )
-                        .uri("lb://order-service")
-                        .metadata("service-name", "order-service")
-                        .metadata("require-auth", "true"))
+                        .uri("lb://order-service"))
 
                 // ADMIN ROUTES (Higher security)
                 .route("admin-users", r -> r
@@ -141,10 +134,7 @@ public class ApiGatewayConfig {
                                 .filter(rateLimitingFilter.apply(new RateLimitingFilter.Config(20, Duration.ofMinutes(1))))
                                 .rewritePath("/api/admin/users/(?<segment>.*)", "/api/users/${segment}")
                         )
-                        .uri("lb://user-service")
-                        .metadata("service-name", "user-service")
-                        .metadata("require-auth", "true")
-                        .metadata("require-role", "ADMIN"))
+                        .uri("lb://user-service"))
 
                 // MONITORING ROUTES (Service health checks)
                 .route("service-health", r -> r
@@ -153,9 +143,7 @@ public class ApiGatewayConfig {
                                 .filter(loggingFilter.apply(new LoggingFilter.Config("HEALTH-CHECK")))
                                 .rewritePath("/health/(?<service>.*)", "/actuator/health")
                         )
-                        .uri("lb://${service}")
-                        .metadata("service-name", "health-check")
-                        .metadata("require-auth", "false"))
+                        .uri("http://localhost:8080"))
 
                 // WEBSOCKET ROUTES (Future enhancement)
                 .route("websocket-notifications", r -> r
@@ -164,9 +152,7 @@ public class ApiGatewayConfig {
                                 .filter(loggingFilter.apply(new LoggingFilter.Config("WEBSOCKET")))
                                 .filter(jwtAuthenticationFilter.apply(new JwtAuthenticationFilter.Config()))
                         )
-                        .uri("lb://notification-service")
-                        .metadata("service-name", "notification-service")
-                        .metadata("require-auth", "true"))
+                        .uri("lb://notification-service"))
 
                 // CATCH-ALL ROUTE for undefined paths
                 .route("not-found", r -> r

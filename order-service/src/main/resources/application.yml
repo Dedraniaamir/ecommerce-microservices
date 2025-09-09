@@ -10,11 +10,17 @@ spring:
     active: dev
 
   # Database Configuration
+#  datasource:
+#    url: jdbc:h2:mem:orderdb
+#    driver-class-name: org.h2.Driver
+#    username: sa
+#    password: password
+
   datasource:
-    url: jdbc:h2:mem:orderdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: password
+    url: jdbc:postgresql://localhost:5432/ecommerce-microservices_orderdb
+    driver-class-name: org.postgresql.Driver
+    username: postgres
+    password: Smart@89
 
   # H2 Console
   h2:

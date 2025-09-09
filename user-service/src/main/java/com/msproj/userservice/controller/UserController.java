@@ -62,7 +62,7 @@ public class UserController {
      * GET /api/users/{id}
      */
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponseDto> getUserById(@PathVariable Long id) {
+    public ResponseEntity<UserResponseDto> getUserById(@PathVariable("id") Long id) {
         logger.debug("GET /api/users/{} - Fetching user", id);
 
         UserResponseDto response = userService.getUserById(id);

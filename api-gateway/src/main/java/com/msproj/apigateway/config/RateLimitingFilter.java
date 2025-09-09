@@ -4,6 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
+import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
+import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -136,5 +138,13 @@ public class RateLimitingFilter extends AbstractGatewayFilterFactory<RateLimitin
         public long getResetTime() {
             return windowStart + window.toMillis();
         }
+    }
+
+    @Bean
+    public KeyResolver userKeyResolver() {
+        // Use client IP as key
+        return exchange -> Mono.just(
+                exchange.getRequest().getRemoteAddress().getAddress().getHostAddress()
+        );
     }
 }

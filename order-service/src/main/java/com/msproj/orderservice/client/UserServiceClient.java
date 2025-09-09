@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 public interface UserServiceClient {
 
     @GetMapping("/api/users/{id}")
-    @CircuitBreaker(name = "user-service", fallbackMethod = "getUserByIdFallback")
+    @CircuitBreaker(name = "user-service")
     @Retry(name = "user-service")
     UserDto getUserById(@PathVariable("id") Long id);
 

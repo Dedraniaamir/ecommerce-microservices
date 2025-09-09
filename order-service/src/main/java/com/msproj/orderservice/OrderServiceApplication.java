@@ -1,4 +1,4 @@
-package com.ecommerce.order;
+package com.msproj.orderservice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

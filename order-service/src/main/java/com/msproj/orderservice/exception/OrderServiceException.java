@@ -21,9 +21,11 @@ public class OrderServiceException extends RuntimeException {
         this.errorCode = "ORDER_SERVICE_ERROR";
     }
 
-    public OrderServiceException(String message, String orderCancellationFailed, Throwable cause, String errorCode) {
+
+    public OrderServiceException(String message, String orderProcessingFailed, Throwable cause, String errorCode) {
         this.errorCode = errorCode;
     }
+
 
     public String getErrorCode() {
         return errorCode;

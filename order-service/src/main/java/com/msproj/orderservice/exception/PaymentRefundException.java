@@ -6,6 +6,6 @@ public class PaymentRefundException extends OrderServiceException {
     }
 
     public PaymentRefundException(String message, Throwable cause) {
-        super(message, "PAYMENT_REFUND_FAILED", cause);
+        super(message, "PAYMENT_REFUND_FAILED", cause, "007");
     }
 }

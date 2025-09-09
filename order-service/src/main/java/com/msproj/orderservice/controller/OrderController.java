@@ -2,6 +2,7 @@ package com.msproj.orderservice.controller;
 
 import com.msproj.orderservice.dto.*;
 import com.msproj.orderservice.entity.OrderStatus;
+import com.msproj.orderservice.service.OrderService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
