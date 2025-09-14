@@ -8,7 +8,7 @@
 out/
 classes/
 **/misc.xml
-
+.idea/
 # Maven
 target/
 pom.xml.tag
