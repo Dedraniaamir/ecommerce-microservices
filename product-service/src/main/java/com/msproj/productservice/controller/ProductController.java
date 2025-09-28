@@ -1,10 +1,12 @@
 package com.msproj.productservice.controller;
 
+import com.google.common.base.Strings;
 import com.msproj.productservice.dto.*;
 import com.msproj.productservice.entity.Product;
 import com.msproj.productservice.entity.ProductStatus;
 import com.msproj.productservice.service.ProductService;
 import jakarta.validation.Valid;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,28 +83,28 @@ public class ProductController {
      */
     @GetMapping
     public ResponseEntity<List<ProductResponseDto>> getAllProducts(
-            @RequestParam Optional<String> name,
-            @RequestParam Optional<BigDecimal> minPrice,
-            @RequestParam Optional<BigDecimal> maxPrice,
-            @RequestParam Optional<Long> categoryId,
-            @RequestParam Optional<String> status,
-            @RequestParam Optional<String> sortBy) {
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "minPrice", required = false) BigDecimal minPrice,
+            @RequestParam(value = "maxPrice", required = false) BigDecimal maxPrice,
+            @RequestParam(value = "categoryId", required = false) Long categoryId,
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "sortBy", required = false, defaultValue = "name") String sortBy) {
 
         logger.debug("GET /api/products - Fetching products with filters");
 
         // OPTIONAL usage: Handle optional query parameters
-        if (name.isPresent() || minPrice.isPresent() || maxPrice.isPresent() ||
-                categoryId.isPresent() || status.isPresent()) {
+        if (!Strings.isNullOrEmpty(name)  || minPrice != null || maxPrice!= null ||
+                categoryId!= null || !Strings.isNullOrEmpty(status)) {
 
             // Build search criteria using BUILDER pattern
             ProductSearchCriteria criteria = ProductSearchCriteria.builder()
-                    .name(name.orElse(null))
-                    .priceRange(minPrice.orElse(null), maxPrice.orElse(null))
-                    .category(categoryId.orElse(null))
-                    .statuses(status.map(s -> ProductStatus.valueOf(s.toUpperCase()))
-                            .map(Arrays::asList)  // Method reference
-                            .orElse(null))
-                    .sortBy(sortBy.orElse("name"))
+                    .name(Strings.isNullOrEmpty(name) ? name : null)
+                    .priceRange(minPrice, maxPrice)
+                    .category(categoryId)
+                    .statuses(StringUtils.isNotBlank(status) ?
+                            List.of(ProductStatus.valueOf(status.toUpperCase())) :
+                            null)
+                    .sortBy(sortBy)
                     .build();
 
             List<ProductResponseDto> products = productService.searchProducts(criteria);

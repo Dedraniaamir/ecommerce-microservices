@@ -379,7 +379,7 @@ public class ProductServiceImpl implements ProductService {
                     criteria.getTags().isEmpty() ||
                     product.getTags().stream().anyMatch(criteria.getTags()::contains);
 
-            return nameMatch && priceMatch && statusMatch && categoryMatch && tagMatch;
+            return nameMatch || statusMatch || (categoryMatch && tagMatch);
         };
     }
 

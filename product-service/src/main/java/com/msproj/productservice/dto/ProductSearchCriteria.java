@@ -16,7 +16,7 @@ public class ProductSearchCriteria {
     private BigDecimal minPrice;
     private BigDecimal maxPrice;
     private Long categoryId;
-    private List<List<ProductStatus>> statuses;
+    private List<ProductStatus> statuses;
     private List<String> tags;
     private String sortBy = "name";
 
@@ -44,7 +44,7 @@ public class ProductSearchCriteria {
         }
 
         public Builder statuses(List<ProductStatus> statuses) {
-            criteria.statuses = Arrays.asList(statuses);
+            criteria.statuses = statuses;
             return this;
         }
 
@@ -86,8 +86,8 @@ public class ProductSearchCriteria {
     public Long getCategoryId() { return categoryId; }
     public void setCategoryId(Long categoryId) { this.categoryId = categoryId; }
 
-    public List<List<ProductStatus>> getStatuses() { return statuses; }
-    public void setStatuses(List<ProductStatus> statuses) { this.statuses = Collections.singletonList(statuses); }
+    public List<ProductStatus> getStatuses() { return statuses; }
+    public void setStatuses(List<ProductStatus> statuses) { this.statuses = statuses; }
 
     public List<String> getTags() { return tags; }
     public void setTags(List<String> tags) { this.tags = tags; }
