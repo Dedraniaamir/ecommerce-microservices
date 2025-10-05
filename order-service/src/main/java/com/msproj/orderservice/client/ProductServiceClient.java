@@ -24,7 +24,7 @@ public interface ProductServiceClient {
     @Retry(name = "product-service")
     ProductDto getProductById(@PathVariable("id") Long id);
 
-    @PostMapping("/api/products/batch")
+    @PostMapping("/api/products/batch1")
     @CircuitBreaker(name = "product-service")
     @Retry(name = "product-service")
     List<ProductDto> getProductsByIds(@RequestBody List<Long> productIds);

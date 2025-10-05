@@ -4,6 +4,7 @@ import com.google.common.base.Strings;
 import com.msproj.productservice.dto.*;
 import com.msproj.productservice.entity.Product;
 import com.msproj.productservice.entity.ProductStatus;
+import com.msproj.productservice.mapper.ProductMapper;
 import com.msproj.productservice.service.ProductService;
 import jakarta.validation.Valid;
 import org.apache.commons.lang3.StringUtils;
@@ -35,10 +36,12 @@ public class ProductController {
     private static final Logger logger = LoggerFactory.getLogger(ProductController.class);
 
     private final ProductService productService;
+    private final ProductMapper productMapper;
 
     @Autowired
-    public ProductController(ProductService productService) {
+    public ProductController(ProductService productService, ProductMapper productMapper) {
         this.productService = productService;
+        this.productMapper = productMapper;
     }
 
     /**
@@ -69,12 +72,24 @@ public class ProductController {
     }
 
     @PostMapping("/batch")
-    public ResponseEntity<List<Product>> getProductsByIdsList(@RequestBody List<Long> id) {
+    public List<Product> getProductsByIdsList(@RequestBody List<Long> id) {
         logger.debug("GET /api/products/{} - Fetching product", id);
 
         List<Product> response = productService.getProductByIdsList(id);
 
-        return ResponseEntity.ok(response);
+       // return ResponseEntity.ok(response);
+        return response;
+    }
+
+    @PostMapping("/batch1")
+    public ResponseEntity<List<ProductDto>> getProductsByIdsList1(@RequestBody List<Long> ids) {
+        List<Product> products = productService.getProductByIdsList(ids);
+
+        List<ProductDto> dtos = products.stream()
+                .map(productMapper::toDto)
+                .toList();
+
+        return ResponseEntity.ok(dtos);
     }
 
     /**
